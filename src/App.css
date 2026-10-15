@@ -1,0 +1,231 @@
+#root {
+  min-height: 100vh;
+}
+
+.score-reader {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+  background: #202124;
+}
+
+.score-reader-header {
+  display: flex;
+  flex: 0 0 2.75rem;
+  align-items: center;
+  padding: 0 0.75rem;
+  background: #182b49;
+}
+
+.score-reader-header button {
+  padding: 0.35rem 0.7rem;
+  border: 0;
+  border-radius: 0.35rem;
+  color: #182b49;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.score-reader-mode-active {
+  outline: 2px solid #76a6e8;
+}
+
+.score-reader-pages {
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.score-reader-page {
+  position: relative;
+  width: min(100%, 60rem);
+  margin: 0 auto 1rem;
+  background: #ffffff;
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 25%);
+}
+
+.score-reader-pen .score-reader-page,
+.score-reader-eraser .score-reader-page {
+  touch-action: none;
+}
+
+.score-reader-touch .score-reader-page {
+  touch-action: pan-y;
+}
+
+.score-reader-page canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.score-reader-page canvas.score-reader-ink {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+
+.app-shell {
+  min-height: 100vh;
+  color: #1d2939;
+  background: #f5f7fb;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
+  color: #ffffff;
+  background: #182b49;
+}
+
+.app-header h1,
+.content-heading h2,
+.placeholder-card h3,
+.app-header p,
+.content-heading p,
+.placeholder-card p {
+  margin: 0;
+}
+
+.app-header h1 {
+  font-size: 1.75rem;
+}
+
+.eyebrow,
+.placeholder-kicker {
+  margin-bottom: 0.35rem !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  color: #9eb6d7;
+}
+
+.app-body {
+  display: flex;
+  min-height: calc(100vh - 94px);
+}
+
+.sidebar {
+  display: flex;
+  flex: 0 0 13rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  background: #e8edf5;
+}
+
+.nav-button,
+.secondary-button {
+  border: 0;
+  border-radius: 0.6rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nav-button {
+  padding: 0.85rem 1rem;
+  color: #344054;
+  text-align: left;
+  background: transparent;
+}
+
+.nav-button:hover,
+.nav-button.active {
+  color: #182b49;
+  background: #ffffff;
+}
+
+.secondary-button {
+  padding: 0.75rem 1rem;
+  color: #182b49;
+  background: #ffffff;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.content-heading {
+  margin-bottom: 1.5rem;
+}
+
+.content-heading .eyebrow,
+.placeholder-kicker {
+  color: #667085;
+}
+
+.content-heading h2 {
+  font-size: 2rem;
+}
+
+.placeholder-card {
+  max-width: 52rem;
+  padding: 2rem;
+  border: 1px solid #d8e0eb;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 0.75rem 2rem rgb(24 43 73 / 8%);
+}
+
+.placeholder-card h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.4rem;
+}
+
+.placeholder-card > p:not(.placeholder-kicker) {
+  max-width: 42rem;
+  color: #667085;
+  line-height: 1.6;
+}
+
+.score-placeholder,
+.import-placeholder {
+  display: grid;
+  min-height: 16rem;
+  margin-top: 1.5rem;
+  place-items: center;
+  border: 2px dashed #b7c5d8;
+  border-radius: 0.75rem;
+  color: #667085;
+  background: #f8fafc;
+}
+
+@media (max-width: 700px) {
+  .app-header {
+    padding: 1rem;
+  }
+
+  .app-body {
+    display: block;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0.75rem;
+  }
+
+  .nav-button {
+    flex: 0 0 auto;
+    text-align: center;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}
