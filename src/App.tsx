@@ -6,6 +6,9 @@ import PageHeader from './components/PageHeader'
 import { createFrontendApi } from './app/frontendApi'
 import LibraryList from './components/LibraryList'
 import ScoreReader from './components/ScoreReader'
+import { BundleType } from '@tauri-apps/api/app'
+import Button from './components/Button'
+import { css } from '@emotion/react'
 
 const cadence = createFrontendApi()
 
@@ -78,6 +81,39 @@ export default function App() {
   if (selectedScoreId) {
     return <ScoreReader scoreId={selectedScoreId} onBack={() => setSelectedScoreId(undefined)} />
   }
+
+  return (
+    <div
+      css={css`
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 40px;
+      `}
+    >
+      <div
+        css={css`
+          display: flex;
+          gap: 10px;
+          align-items: flex-end;
+        `}
+      >
+        <Button text="Press Me!" size="xs" />
+        <Button text="Press Me!" size='sm' />
+        <Button text="Press Me!" size='md' />
+        <Button text="Press Me!" size='lg' />
+        <Button text="Press Me!" size='xl' />
+        <Button text="Press Me!" size='xxl' disabled />
+      </div>
+      <div>
+        <Button text="Secondary" variant='secondary' />
+        <Button text="Danger" variant='danger' />
+      </div>
+    </div>
+  )
 
   return (
     <div>
