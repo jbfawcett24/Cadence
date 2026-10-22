@@ -1,3 +1,6 @@
+import { css } from '@emotion/react'
+import type { SerializedStyles } from '@emotion/react'
+
 /**
  * Shared visual tokens for Cadence.
  *
@@ -126,6 +129,9 @@ const buttonShadowSizes = {
   xxl: { offset: '12px', blur: '20px', insetOffset: '10px', insetBlur: '12px' },
 } as const
 
+export type ButtonVariant = 'primary' | 'secondary' | 'danger'
+export type ButtonSize = keyof typeof buttonSizeHeights
+
 export const theme = {
   ...baseTheme,
   button: {
@@ -135,5 +141,184 @@ export const theme = {
     shadowSizes: buttonShadowSizes,
   },
 } as const
+
+export function getRaisedShadow(size: ButtonSize, variant: ButtonVariant) {
+  const shadow = theme.button.shadowSizes[size]
+  const outerShadow = `-${shadow.offset} -${shadow.offset} ${shadow.blur} rgb(255 255 255 / 95%), ${shadow.offset} ${shadow.offset} ${shadow.blur} rgb(80 88 100 / 45%)`
+
+  if (variant === 'danger') {
+    return `${outerShadow}, inset -${shadow.insetOffset} -${shadow.insetOffset} ${shadow.insetBlur} rgb(120 25 37 / 30%), inset ${shadow.insetOffset} ${shadow.insetOffset} ${shadow.insetBlur} rgb(255 145 155 / 70%)`
+  }
+
+  return `${outerShadow}, inset -${shadow.insetOffset} -${shadow.insetOffset} ${shadow.insetBlur} rgb(80 88 100 / 22%), inset ${shadow.insetOffset} ${shadow.insetOffset} ${shadow.insetBlur} rgb(255 255 255 / 100%)`
+}
+
+interface ButtonStyleOptions {
+  variant: ButtonVariant
+  size: ButtonSize
+  disabled: boolean
+}
+
+export function getButtonStyles({
+  variant,
+  size,
+  disabled,
+}: ButtonStyleOptions): SerializedStyles {
+  const colors = theme.button.variants[variant]
+  const height = theme.button.sizeHeights[size]
+  const fontSize = theme.button.sizeFontSizes[size]
+  const raisedShadow = getRaisedShadow(size, variant)
+
+  return css`
+    min-height: ${height};
+    padding: ${theme.spacing.medium} ${theme.spacing.large};
+    border: none;
+    border-radius: ${theme.radii.medium};
+    color: ${colors.color};
+    background: ${colors.background};
+    font: inherit;
+    font-size: ${fontSize};
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: ${disabled ? 'not-allowed' : 'pointer'};
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-touch-callout: none;
+    box-shadow: ${raisedShadow};
+    transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+
+    &:hover:not(:disabled) {
+      background: ${colors.hoverBackground};
+      transform: none;
+    }
+
+    &:active:not(:disabled) {
+      background: ${colors.pressedBackground};
+      transform: translateY(1px);
+      box-shadow: ${colors.pressedShadow};
+    }
+
+    &:focus-visible {
+      outline: 3px solid ${theme.colors.focus};
+      outline-offset: 3px;
+    }
+
+    &[aria-pressed="true"] {
+      box-shadow: ${colors.pressedShadow};
+      transform: translateY(2px);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      box-shadow: none;
+      transform: none;
+    }
+
+    &[aria-busy="true"] {
+      cursor: wait;
+    }
+  `
+}
+
+export function getIconButtonStyles({
+  variant,
+  size,
+  disabled,
+}: ButtonStyleOptions): SerializedStyles {
+  const colors = theme.button.variants[variant]
+  const height = theme.button.sizeHeights[size]
+  const fontSize = theme.button.sizeFontSizes[size]
+  const raisedShadow = getRaisedShadow(size, variant)
+
+  return css`
+    position: relative;
+    display: inline-grid;
+    width: ${height};
+    min-width: ${height};
+    min-height: ${height};
+    padding: 0;
+    place-items: center;
+    border: none;
+    border-radius: ${theme.radii.round};
+    color: ${colors.color};
+    background: ${colors.background};
+    font: inherit;
+    font-size: ${fontSize};
+    font-weight: 700;
+    line-height: 1;
+    cursor: ${disabled ? 'not-allowed' : 'pointer'};
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-touch-callout: none;
+    box-shadow: ${raisedShadow};
+    transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease;
+
+    & > svg,
+    & > span {
+      width: 1.25em;
+      height: 1.25em;
+    }
+
+    &::after {
+      position: absolute;
+      z-index: 10;
+      top: calc(100% + ${theme.spacing.small});
+      left: 50%;
+      padding: ${theme.spacing.small} ${theme.spacing.medium};
+      border-radius: ${theme.radii.small};
+      color: ${theme.colors.textOnDark};
+      background: ${theme.colors.readerBackground};
+      content: attr(data-tooltip);
+      font-size: 0.75rem;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -4px);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: ${colors.hoverBackground};
+      transform: none;
+    }
+
+    &:hover:not(:disabled)::after,
+    &:focus-visible::after {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    &:active:not(:disabled) {
+      background: ${colors.pressedBackground};
+      transform: translateY(1px);
+      box-shadow: ${colors.pressedShadow};
+    }
+
+    &:focus-visible {
+      outline: 3px solid ${theme.colors.focus};
+      outline-offset: 3px;
+    }
+
+    &[aria-pressed="true"] {
+      box-shadow: ${colors.pressedShadow};
+      transform: translateY(2px);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      box-shadow: none;
+      transform: none;
+    }
+
+    &[aria-busy="true"] {
+      cursor: wait;
+    }
+  `
+}
 
 export type Theme = typeof theme
