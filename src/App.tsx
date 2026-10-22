@@ -6,11 +6,19 @@ import PageHeader from './components/PageHeader'
 import { createFrontendApi } from './app/frontendApi'
 import LibraryList from './components/LibraryList'
 import ScoreReader from './components/ScoreReader'
-import { BundleType } from '@tauri-apps/api/app'
 import Button from './components/Button'
 import { css } from '@emotion/react'
+import IconButton from './components/IconButton'
 
 const cadence = createFrontendApi()
+
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
 
 export default function App() {
   const [importScore, setImportScore] = useState(false)
@@ -111,6 +119,14 @@ export default function App() {
       <div>
         <Button text="Secondary" variant='secondary' />
         <Button text="Danger" variant='danger' />
+      </div>
+      <div>
+        <IconButton
+          icon={<PlusIcon />}
+          label="Add score"
+          onClick={() => setImportScore(true)}
+          variant='danger'
+        />
       </div>
     </div>
   )
