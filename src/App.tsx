@@ -13,6 +13,7 @@ import ScoreCard from './components/ScoreCard'
 import ScoreRow from './components/ScoreRow'
 import type { Folder, Score } from './shared/types'
 import { theme } from './components/theme'
+import { FilePlusIcon, GridFourIcon, ListBulletsIcon, X, XIcon } from '@phosphor-icons/react'
 
 const cadence = createFrontendApi()
 
@@ -203,10 +204,15 @@ export default function App() {
         title="Library"
         actions={
           <>
-            <button type="button" onClick={() => setImportScore((isOpen) => !isOpen)}>
-              {importScore ? 'Close import' : 'Import score'}
-            </button>
-            <Button
+            <IconButton
+              icon={FilePlusIcon}
+              label='Import New Score'
+              variant='primary'
+              onClick={() => setImportScore((isOpen) => !isOpen)}
+            />
+            <IconButton
+              icon={mode === 'row' ? GridFourIcon : ListBulletsIcon}
+              label='Change Display'
               onClick={() => {
                 if (mode === 'grid') {
                   setMode('row')
@@ -214,12 +220,13 @@ export default function App() {
                   setMode('grid')
                 }
               }}
-            >
-              Mode
-            </Button>
-            <button type="button" onClick={() => void handleQuit()}>
-              Quit
-            </button>
+            />
+            <IconButton
+              icon={XIcon}
+              label='Quit Cadence'
+              onClick={() => void handleQuit()}
+              variant='danger'
+            />
           </>
         }
       />

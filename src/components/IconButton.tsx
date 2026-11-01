@@ -1,18 +1,20 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes } from 'react'
+import type { Icon } from '@phosphor-icons/react'
 import { type ButtonSize, type ButtonVariant } from './Button'
 import { getIconButtonStyles } from './theme'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  icon: ReactNode
+  icon: Icon
   label: string
   size?: ButtonSize
   variant?: ButtonVariant
   loading?: boolean
   pressed?: boolean
+  onClick: () => void
 }
 
 export default function IconButton({
-  icon,
+  icon: IconComponent,
   label,
   size = 'md',
   variant = 'primary',
@@ -20,6 +22,7 @@ export default function IconButton({
   pressed = false,
   disabled = false,
   type = 'button',
+  onClick,
   ...buttonProps
 }: IconButtonProps) {
   const isDisabled = disabled || loading
@@ -37,9 +40,10 @@ export default function IconButton({
         event.preventDefault()
         buttonProps.onContextMenu?.(event)
       }}
+      onClick={onClick}
       css={getIconButtonStyles({ variant, size, disabled: isDisabled })}
     >
-      {icon}
+      <IconComponent color="currentColor" size="1.25em" weight="bold" aria-hidden="true" />
     </button>
   )
 }

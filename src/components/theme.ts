@@ -170,6 +170,7 @@ export function getButtonStyles({
   const raisedShadow = getRaisedShadow(size, variant)
 
   return css`
+    flex: 0 0 auto;
     min-height: ${height};
     padding: ${theme.spacing.medium} ${theme.spacing.large};
     border: none;
