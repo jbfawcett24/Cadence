@@ -5,6 +5,7 @@ import type {
   AudioLinkDraft,
   AudioFormat,
   ManagedScoreFile,
+  Folder,
   Score,
   Setlist,
 } from '../shared/types'
@@ -15,6 +16,10 @@ export type TauriCommand =
   | 'resolve_score_file'
   | 'load_library'
   | 'save_library'
+  | 'load_folders'
+  | 'save_folders'
+  | 'move_score'
+  | 'move_folder'
   | 'load_setlists'
   | 'save_setlists'
   | 'load_annotations'
@@ -32,6 +37,10 @@ export interface TauriCommandClient {
   resolveScoreFile(scoreId: string): Promise<string>
   loadLibrary(): Promise<Score[]>
   saveLibrary(scores: Score[]): Promise<void>
+  loadFolders(): Promise<Folder[]>
+  saveFolders(folders: Folder[]): Promise<void>
+  moveScore(scoreId: string, folderId: string | null): Promise<void>
+  moveFolder(folderId: string, parentId: string | null): Promise<void>
   loadSetlists(): Promise<Setlist[]>
   saveSetlists(setlists: Setlist[]): Promise<void>
   loadAnnotations(scoreId: string): Promise<AnnotationDocument>
@@ -51,8 +60,12 @@ export function createTauriCommandClient(invoke: TauriInvoke): TauriCommandClien
     importScoreFile: (sourcePath) => invoke(tauriCommands.import_score_file, { sourcePath }),
     deleteScoreFile: (scoreId) => invoke(tauriCommands.delete_score_file, { scoreId }),
     resolveScoreFile: (scoreId) => invoke(tauriCommands.resolve_score_file, { scoreId }),
-    loadLibrary: async () => parseJson(await invoke<string | null>(tauriCommands.load_library), []),
+    loadLibrary: async () => parseJson<Score[]>(await invoke<string | null>(tauriCommands.load_library), []).map((score) => ({ ...score, folderId: score.folderId ?? null })),
     saveLibrary: (scores) => invoke(tauriCommands.save_library, { contents: JSON.stringify(scores, null, 2) }),
+    loadFolders: async () => parseJson(await invoke<string | null>(tauriCommands.load_folders), []),
+    saveFolders: (folders) => invoke(tauriCommands.save_folders, { contents: JSON.stringify(folders, null, 2) }),
+    moveScore: (scoreId, folderId) => invoke(tauriCommands.move_score, { scoreId, folderId }),
+    moveFolder: (folderId, parentId) => invoke(tauriCommands.move_folder, { folderId, parentId }),
     loadSetlists: async () => parseJson(await invoke<string | null>(tauriCommands.load_setlists), []),
     saveSetlists: (setlists) => invoke(tauriCommands.save_setlists, { contents: JSON.stringify(setlists, null, 2) }),
     loadAnnotations: async (scoreId) =>
@@ -99,6 +112,10 @@ export const tauriCommands: Record<TauriCommand, TauriCommand> = {
   resolve_score_file: 'resolve_score_file',
   load_library: 'load_library',
   save_library: 'save_library',
+  load_folders: 'load_folders',
+  save_folders: 'save_folders',
+  move_score: 'move_score',
+  move_folder: 'move_folder',
   load_setlists: 'load_setlists',
   save_setlists: 'save_setlists',
   load_annotations: 'load_annotations',

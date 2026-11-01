@@ -21,10 +21,10 @@ Access these functions directly on cadence.
 
 ### startup()
 
-Loads all saved scores, setlists, and application settings.
+Loads all saved scores, setlists, folders, and application settings.
 
 ~~~ts
-const { scores, setlists, settings } = await cadence.startup()
+const { scores, folders, setlists, settings } = await cadence.startup()
 ~~~
 
 ### importScore(sourcePath, metadata?)
@@ -41,8 +41,9 @@ const score = await cadence.importScore('/home/me/scores/sonata.pdf', {
 })
 ~~~
 
-Metadata may include title, composer, instrument, and tags. Without a title,
-the source filename is used.
+Metadata may include title, composer, instrument, tags, and an optional
+`folderId`. Without a title, the source filename is used. Imported scores go
+to the library root when no folder is supplied.
 
 ### openScore(scoreId)
 
@@ -91,6 +92,12 @@ Access through cadence.services.library.
 | Function | Purpose |
 |---|---|
 | listScores() | Returns every score in the local library. |
+| listLibraryTree() | Returns root scores and recursively nested folders, each containing its scores and child folders. |
+| createFolder(folder) | Creates a folder with a parent folder ID or `null` for the library root. |
+| updateFolder(folder) | Renames or updates a folder record. Sibling folder names must be unique. |
+| removeFolder(id) | Removes an empty folder. Non-empty folders are rejected. |
+| moveFolder(id, newParentId) | Moves a folder while preventing cycles and duplicate sibling names. |
+| moveScore(id, folderId) | Moves a score to a folder or to the library root with `null`. |
 | getScore(id) | Returns one score or undefined. |
 | searchScores(query) | Case-insensitively searches title, composer, instrument, and tags. An empty query returns all scores. |
 | createScore(score) | Adds a complete Score record. Prefer importScore for normal imports. |
@@ -105,6 +112,20 @@ await cadence.services.library.updateScore({
   updatedAt: new Date().toISOString(),
 })
 ~~~
+
+`listLibraryTree()` returns a storage-independent view:
+
+~~~ts
+const tree = await cadence.services.library.listLibraryTree()
+// tree.rootScores: Score[]
+// tree.folders: { folder, scores, children }[]
+~~~
+
+The library service builds this tree from flat folder and score records. UI
+components should use the tree API rather than reading persistence data or
+filesystem paths directly. Folder moves are expressed as operations, so the
+eventual SQLite adapter can perform them transactionally without changing the
+frontend API.
 
 ## Setlist service
 
@@ -203,7 +224,9 @@ await cadence.services.settings.update({
 
 The complete definitions are in src/shared/types.ts:
 
-- Score: library metadata and managed score file reference.
+- Score: library metadata, managed score file reference, and nullable folder ID.
+- Folder: named self-referencing library node with a nullable parent ID.
+- LibraryTree: root scores plus recursively nested folder nodes.
 - Setlist: an ordered list of stable score IDs.
 - AnnotationDocument: page-organized vector strokes.
 - AudioLink: score ID, external local path, and detected format.

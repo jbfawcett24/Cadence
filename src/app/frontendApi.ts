@@ -1,10 +1,11 @@
 import { invoke } from '@tauri-apps/api/core'
 import type { ApplicationServices } from './dependencies'
 import { createApplicationServices } from './dependencies'
-import type { AppSettings, AudioFormat, AudioLink, AudioLinkDraft, Score } from '../shared/types'
+import type { AppSettings, AudioFormat, AudioLink, AudioLinkDraft, Folder, Score } from '../shared/types'
 
 export interface StartupData {
   scores: Score[]
+  folders: Folder[]
   setlists: Awaited<ReturnType<ApplicationServices['setlists']['listSetlists']>>
   settings: AppSettings
 }
@@ -12,7 +13,7 @@ export interface StartupData {
 export interface CadenceApi {
   services: ApplicationServices
   startup(): Promise<StartupData>
-  importScore(sourcePath: string, metadata?: Partial<Pick<Score, 'title' | 'composer' | 'instrument' | 'tags'>>): Promise<Score>
+  importScore(sourcePath: string, metadata?: Partial<Pick<Score, 'title' | 'composer' | 'instrument' | 'tags' | 'folderId'>>): Promise<Score>
   openScore(scoreId: string): Promise<{ score: Score; filePath: string }>
   removeScore(scoreId: string): Promise<void>
   linkAudio(link: AudioLinkDraft): Promise<AudioLink>
@@ -25,12 +26,13 @@ export function createFrontendApi(): CadenceApi {
   return {
     services,
     async startup() {
-      const [scores, setlists, settings] = await Promise.all([
+      const [scores, folders, setlists, settings] = await Promise.all([
         services.library.listScores(),
+        services.library.listFolders(),
         services.setlists.listSetlists(),
         services.settings.load(),
       ])
-      return { scores, setlists, settings }
+      return { scores, folders, setlists, settings }
     },
     async importScore(sourcePath, metadata = {}) {
       const managed = await services.client.importScoreFile(sourcePath)
@@ -41,6 +43,7 @@ export function createFrontendApi(): CadenceApi {
         composer: metadata.composer,
         instrument: metadata.instrument,
         tags: metadata.tags ?? [],
+        folderId: metadata.folderId ?? null,
         format: managed.format,
         managedFilePath: managed.managedPath,
         originalFilePath: managed.originalPath,

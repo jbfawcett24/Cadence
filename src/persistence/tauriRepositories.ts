@@ -1,12 +1,13 @@
 import type {
   AnnotationRepository,
   AudioRepository,
+  FolderRepository,
   ScoreRepository,
   SetlistRepository,
   SettingsRepository,
 } from './repositories'
 import type { TauriCommandClient } from '../bridge/tauriCommands'
-import type { AnnotationDocument, AppSettings, AudioLink, Score, Setlist, Stroke } from '../shared/types'
+import type { AnnotationDocument, AppSettings, AudioLink, Folder, Score, Setlist, Stroke } from '../shared/types'
 
 export class TauriScoreRepository implements ScoreRepository {
   private readonly client: TauriCommandClient
@@ -47,6 +48,10 @@ export class TauriScoreRepository implements ScoreRepository {
     return this.client.deleteScoreFile(id)
   }
 
+  moveToFolder(id: string, folderId: string | null) {
+    return this.client.moveScore(id, folderId)
+  }
+
   async search(query: string) {
     const normalizedQuery = query.trim().toLocaleLowerCase()
     if (!normalizedQuery) return this.client.loadLibrary()
@@ -55,6 +60,52 @@ export class TauriScoreRepository implements ScoreRepository {
         .filter(Boolean)
         .some((field) => field!.toLocaleLowerCase().includes(normalizedQuery)),
     )
+  }
+}
+
+export class TauriFolderRepository implements FolderRepository {
+  private readonly client: TauriCommandClient
+
+  constructor(client: TauriCommandClient) {
+    this.client = client
+  }
+
+  async create(folder: Folder) {
+    const folders = await this.client.loadFolders()
+    if (folders.some((existing) => existing.id === folder.id)) throw new Error(`Folder already exists: ${folder.id}`)
+    if (folders.some((existing) => existing.parentId === folder.parentId && existing.name === folder.name)) {
+      throw new Error(`Folder already exists in this location: ${folder.name}`)
+    }
+    await this.client.saveFolders([...folders, folder])
+  }
+
+  async get(id: string) {
+    return (await this.client.loadFolders()).find((folder) => folder.id === id)
+  }
+
+  async update(folder: Folder) {
+    const folders = await this.client.loadFolders()
+    if (!folders.some((existing) => existing.id === folder.id)) throw new Error(`Folder not found: ${folder.id}`)
+    if (folders.some((existing) => existing.id !== folder.id && existing.parentId === folder.parentId && existing.name === folder.name)) {
+      throw new Error(`Folder already exists in this location: ${folder.name}`)
+    }
+    await this.client.saveFolders(folders.map((existing) => (existing.id === folder.id ? folder : existing)))
+  }
+
+  async delete(id: string) {
+    const folders = await this.client.loadFolders()
+    if (!folders.some((folder) => folder.id === id)) return
+    if (folders.some((folder) => folder.parentId === id)) throw new Error('Cannot delete a folder that contains folders')
+    if ((await this.client.loadLibrary()).some((score) => score.folderId === id)) throw new Error('Cannot delete a folder that contains scores')
+    await this.client.saveFolders(folders.filter((folder) => folder.id !== id))
+  }
+
+  list() {
+    return this.client.loadFolders()
+  }
+
+  move(id: string, newParentId: string | null) {
+    return this.client.moveFolder(id, newParentId)
   }
 }
 

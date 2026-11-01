@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cadence Requirements Specification</title>
+<style>
+@page { size: Letter; margin: 0.75in; }
+body { font-family: Arial, sans-serif; color: #202124; line-height: 1.35; font-size: 10.5pt; }
+h1 { color: #17365d; font-size: 23pt; page-break-before: always; }
+h1:first-of-type { page-break-before: auto; }
+h2 { color: #1f4e79; font-size: 16pt; border-bottom: 1px solid #9fbad0; padding-bottom: 3px; }
+h3 { color: #2f5597; font-size: 12.5pt; margin-bottom: 4px; }
+p { margin: 6px 0 9px; }
+.title { text-align: center; page-break-after: always; padding-top: 1.5in; }
+.title h1 { page-break-before: auto; border: 0; font-size: 30pt; }
+.subtitle { font-size: 16pt; color: #444; }
+.meta { margin: 55px auto; width: 75%; text-align: left; }
+.meta p { border-bottom: 1px solid #bbb; padding: 8px; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 9pt; }
+th { background: #d9eaf7; color: #17365d; text-align: left; }
+th, td { border: 1px solid #8ea9bd; padding: 6px; vertical-align: top; }
+tr { page-break-inside: avoid; }
+.small { font-size: 8.5pt; }
+.box { border: 1px solid #7799b5; background: #f4f8fb; padding: 10px; margin: 10px 0; }
+pre { font-family: "Courier New", monospace; font-size: 8.5pt; white-space: pre-wrap; background: #f4f4f4; border: 1px solid #bbb; padding: 10px; }
+.req { font-weight: bold; }
+.note { color: #555; font-style: italic; }
+ul { margin-top: 4px; }
+a { color: #0563c1; }
+</style>
+</head>
+<body>
+
+<div class="title">
+  <h1>Cadence</h1>
+  <div class="subtitle">Requirements Specification</div>
+  <div class="meta">
+    <p><strong>Team member:</strong> James Fawcett</p>
+    <p><strong>Course:</strong> CSE 499 Senior Project</p>
+    <p><strong>Document date:</strong> October 30, 2026</p>
+    <p><strong>Project description:</strong> Cadence is an offline-first desktop sheet-music reader for Windows and Linux hybrid laptops and tablets. It lets musicians import, organize, read, annotate, navigate, and practice scores without paper binders, an iPad, or an internet connection.</p>
+  </div>
+</div>
+
+<h1>Section 1: Introduction</h1>
+<h2>Why this project?</h2>
+<p>Musicians often carry paper binders or depend on a specific tablet platform to access music during rehearsals and performances. Paper scores are difficult to organize and annotate consistently, while many digital workflows assume an iPad, a cloud account, or a network connection. Cadence addresses this problem by providing a focused sheet-music reader that runs on Windows and Linux devices, including touchscreen hybrid laptops and tablets.</p>
+
+<h2>Purpose</h2>
+<p>The purpose of Cadence is to provide musicians and music educators with a dependable local application for managing and reading digital sheet music. The application will import PDF and MusicXML scores, display them in a performance-friendly reader, support stylus annotations, provide touch and pedal navigation, organize scores into a searchable library and setlists, and play a MusicXML pitch/tempo reference. Core workflows will remain available when network access is disabled.</p>
+
+<h2>Scope</h2>
+<p>Cadence will include local score import, PDF and MusicXML reading, page navigation, portrait and landscape layouts, pen/highlighter/eraser annotation, palm-rejection behavior on tested hardware, local persistence, library metadata and search, setlists, MusicXML playback, and offline validation. Stretch work includes linking external MP3/WAV tracks to PDF scores, undo/redo, exporting annotated PDFs, and a visual metronome.</p>
+<p>Cadence will not require a cloud backend, user account, online synchronization, proprietary service, advanced audio mixing, or a guarantee of compatibility with every stylus, Bluetooth pedal, Windows device, or Linux input stack. Hardware support will be reported only for devices actually tested.</p>
+
+<h2>Technologies Used</h2>
+<ul>
+  <li>Tauri 2 and Rust for the cross-platform desktop shell, local filesystem commands, managed score storage, and safe persistence.</li>
+  <li>React, TypeScript, Vite, and Emotion for the touchscreen-first user interface.</li>
+  <li>PDF.js for multi-page PDF rendering and canvas-based display.</li>
+  <li>A MusicXML notation renderer to be selected and documented before implementation (OpenSheetMusicDisplay or Verovio).</li>
+  <li>Local JSON files behind repository interfaces for the initial storage engine; the UI will not depend directly on the storage format.</li>
+  <li>Web Pointer Events and vector stroke data for annotations; Tauri dialog support for local file selection.</li>
+</ul>
+
+<h1>Section 2a: Must Have Requirements</h1>
+<p>Each requirement below is written as a functional “shall” statement. The success measure describes an observable demonstration rather than a code inspection.</p>
+<table>
+<tr><th>ID</th><th>Requirement</th><th>Success measure and demonstration</th></tr>
+<tr><td>FR-01</td><td class="req">The system shall import and open multi-page PDF scores.</td><td>Import a sample multi-page PDF while offline, open it from the library, and view every page in the reader.</td></tr>
+<tr><td>FR-02</td><td class="req">The system shall import and render MusicXML scores as readable musical notation.</td><td>Import a standard MusicXML fixture, open it, and show readable notation in the score reader.</td></tr>
+<tr><td>FR-03</td><td class="req">The system shall provide usable zoom, pan, page caching, and high-DPI-aware score rendering.</td><td>Zoom and pan a score, change pages, and verify that the view remains legible without an unacceptable reload delay or visual degradation.</td></tr>
+<tr><td>FR-04</td><td class="req">The system shall adapt the score layout to portrait and landscape orientation.</td><td>Resize or rotate the window: portrait displays one page and landscape displays a two-page spread while preserving the current reading position.</td></tr>
+<tr><td>FR-05</td><td class="req">The system shall navigate forward and backward through scores using touch controls and configurable keyboard/HID pedal keys.</td><td>Advance and return through a sample score using touch edge zones or taps, then repeat with mapped PageUp/PageDown or equivalent HID pedal events.</td></tr>
+<tr><td>FR-06</td><td class="req">The system shall provide pen, highlighter, and eraser annotation tools.</td><td>Draw a pen mark, draw a distinguishable translucent highlighter mark, erase each mark, and observe the result in the reader.</td></tr>
+<tr><td>FR-07</td><td class="req">The system shall distinguish pen input from touch input for palm-rejection behavior.</td><td>On a tested stylus touchscreen, draw with the pen while resting a palm or finger on the display; touch contact shall not create unwanted ink. Any device limitation shall be documented.</td></tr>
+<tr><td>FR-08</td><td class="req">The system shall smooth pen input into continuous vector strokes and preserve score alignment during zoom and pan.</td><td>Make a fast stroke, zoom and pan the page, and verify that the stroke is visually continuous and remains aligned with the score.</td></tr>
+<tr><td>FR-09</td><td class="req">The system shall persist annotations by score page for both PDF and MusicXML documents without modifying the original score.</td><td>Annotate a PDF and a MusicXML score, close and relaunch the application, and verify that marks return on the same pages and the original files are unchanged.</td></tr>
+<tr><td>FR-11</td><td class="req">The system shall organize imported scores in a local library with metadata and offline search by title, composer, instrument, or tag.</td><td>Import several scores with metadata, place them in folders, search each supported field while offline, and verify that matching scores are returned.</td></tr>
+<tr><td>FR-12</td><td class="req">The system shall allow a user to create, reorder, save, open, and navigate an ordered setlist.</td><td>Create a three-piece setlist, reorder the pieces, close and reopen it, and perform through the pieces without returning to the library between scores.</td></tr>
+<tr><td>FR-13</td><td class="req">The system shall synthesize and play MusicXML notes with play/pause and tempo control.</td><td>Open a standard MusicXML fixture, start playback, pause it, change tempo, and hear the score play at the selected tempo.</td></tr>
+<tr><td>FR-15</td><td class="req">The system shall provide a clear, touchscreen-first interface suitable for rehearsal and performance.</td><td>Using touch only, import/open a score, reach primary reader controls, change tools, and navigate without controls obscuring the readable score. Controls shall have visible active states and usable touch targets.</td></tr>
+</table>
+
+<h1>Section 2b: Stretch Requirements</h1>
+<p>Stretch requirements will be attempted after the must-have requirements are stable. They may not displace the core offline reading, annotation, navigation, library, setlist, or MusicXML playback workflows.</p>
+<table>
+<tr><th>ID</th><th>Stretch requirement</th><th>Success measure and demonstration</th></tr>
+<tr><td>FR-10</td><td class="req">The system may provide undo and redo for annotation changes.</td><td>After creating and erasing multiple marks, undo removes the latest change and redo restores it. The behavior is demonstrated with at least the latest stroke operations.</td></tr>
+<tr><td>FR-14</td><td class="req">The system may link a local MP3 or WAV audio track to a PDF score and play it from that score.</td><td>Select a valid local MP3 or WAV file, associate it with a PDF, reopen the score offline, and start playback. A missing linked file shall produce a clear error.</td></tr>
+<tr><td>FR-16</td><td class="req">The system may export a PDF with saved annotations composited over the score for printing.</td><td>Export an annotated PDF without altering the original, open the result in a standard PDF viewer, and verify that annotations are visible and printable.</td></tr>
+<tr><td>FR-17</td><td class="req">The system may provide a visual metronome for practice.</td><td>Enable the metronome, set a tempo, and observe a consistent visual beat indicator while a score is open or playing. This item is attempted only if all must-have requirements are complete.</td></tr>
+</table>
+
+<h1>Section 2c: Weekly Schedule</h1>
+<p>The project is at the end of Week 7 on Friday, October 30, 2026. Each listed week begins on Monday and represents approximately nine hours of work. Week 7 is included as the current checkpoint; the remaining rows are the planned completion schedule.</p>
+<table>
+<tr><th>Week / Monday start</th><th>Milestone and planned work</th><th>Primary requirements</th><th>Hours</th></tr>
+<tr><td>7<br>Oct 26, 2026</td><td>Technology prototype checkpoint: demonstrate the Tauri/React foundation, PDF/MusicXML rendering direction, and basic page flipping on an available 2-in-1 device.</td><td>FR-01, FR-02, FR-05</td><td>9</td></tr>
+<tr><td>8<br>Nov 2, 2026</td><td>Implement the vector inking pipeline, pointer capture, stroke smoothing, variable pen width, and score-relative coordinates.</td><td>FR-06, FR-08</td><td>9</td></tr>
+<tr><td>9<br>Nov 9, 2026</td><td>Add pen, highlighter, eraser, pointer filtering, palm-rejection behavior, and stretch undo/redo if the core pipeline is stable.</td><td>FR-06, FR-07, FR-10</td><td>9</td></tr>
+<tr><td>10<br>Nov 16, 2026</td><td>Serialize and persist annotations for PDF and MusicXML pages; verify restart recovery and non-destructive storage.</td><td>FR-09</td><td>9</td></tr>
+<tr><td>11<br>Nov 23, 2026</td><td>Implement automatic portrait/landscape layout, touch edge zones, and page-flip behavior.</td><td>FR-04, FR-05, FR-15</td><td>9</td></tr>
+<tr><td>12<br>Nov 30, 2026</td><td>Add configurable keyboard/HID pedal mappings, debouncing, fallback behavior, and hardware testing records.</td><td>FR-05, FR-07</td><td>9</td></tr>
+<tr><td>13<br>Dec 7, 2026</td><td>Implement local library indexing, folders, metadata editing, search, setlist creation, ordering, persistence, and performance navigation.</td><td>FR-11, FR-12</td><td>9</td></tr>
+<tr><td>14<br>Dec 14, 2026</td><td>Implement MusicXML synthesis, play/pause, tempo adjustment, and attempt external PDF audio linking if core work is complete.</td><td>FR-13; stretch FR-14</td><td>9</td></tr>
+<tr><td>15<br>Dec 21, 2026</td><td>Run offline, persistence, failure-path, cross-platform, touchscreen, stylus, and performance tests; repair critical issues.</td><td>All must-have requirements</td><td>9</td></tr>
+<tr><td>16<br>Dec 28, 2026</td><td>Complete final requirements materials, annotated-PDF export/metronome stretch attempts, build verification, and live demonstration checklist.</td><td>FR-16, FR-17 if capacity remains; final verification</td><td>9</td></tr>
+</table>
+
+<h1>Section 3: Design Overview of the Product</h1>
+<h2>Workflow</h2>
+<p>The primary workflow begins with a local score file and ends with a readable, annotated, reusable performance resource:</p>
+<pre>Choose local PDF or MusicXML
+        |
+        v
+Validate format and copy score into managed local storage
+        |
+        v
+Create metadata record -> library/folders -> optional setlist
+        |
+        v
+Open score -> renderer displays pages/notation
+        |
+        +--> touch, keyboard, or HID pedal changes page/viewport
+        +--> pen/highlighter creates page-relative vector annotation
+        +--> eraser removes selected stroke
+        +--> MusicXML playback produces local pitch/tempo reference
+        |
+        v
+Persist library, setlist, settings, and annotations locally
+        |
+        v
+Close/relaunch -> restore the same score and user data</pre>
+
+<h2>Resources</h2>
+<p>Development resources include a Windows or Linux x86_64 computer, an available touchscreen hybrid laptop or tablet, a supported active stylus when available, a keyboard or Bluetooth HID pedal for navigation testing, representative PDF/MusicXML fixtures, and local MP3/WAV fixtures for the stretch audio feature. The project uses the repository’s React/TypeScript/Tauri/Rust toolchain, npm, Cargo, and the libraries listed in Section 1.</p>
+
+<h2>Data at Rest</h2>
+<p>Imported PDF and MusicXML files are copied into an application-managed library directory; the original files are never moved or deleted. Library metadata, folders, setlists, page-organized annotations, audio links, and settings are stored locally as separate JSON files behind persistence interfaces. Scores and setlists use stable IDs. Linked MP3/WAV files initially remain at their original local paths. The application does not require a profile, login, cloud account, or network database.</p>
+
+<h2>Data on the Wire</h2>
+<p>Cadence has no required remote network service and does not transmit score, annotation, or audio data. Data moves locally between the React/TypeScript frontend, application services, persistence interfaces, and explicit Tauri/Rust commands. File selection and managed local-file resolution occur through Tauri APIs. Core workflows must continue with network access disabled.</p>
+
+<h2>Data State</h2>
+<pre>Library source file
+  -> validated managed score copy
+  -> Score metadata record (id, title, composer, tags, format, folder)
+  -> renderer state (active page, viewport, orientation)
+  -> page annotation document (ordered vector strokes)
+  -> persisted JSON records
+  -> restored application state after relaunch
+
+Setlist state: ordered stable score IDs -> performance navigation -> next score
+Audio state: optional local link -> availability check -> playback state</pre>
+
+<h2>HMI/HCI/GUI</h2>
+<p>The interface is designed around a library view and a score-reader view. The library presents imported scores, folders, metadata, search, and setlists. The reader prioritizes the score surface and keeps primary actions—back, page navigation, orientation, annotation tool selection, and playback—visible but unobtrusive. Touch controls use large targets; keyboard/HID alternatives are available for page turning. The active tool is visibly indicated, errors are shown in the interface, and score content remains the dominant visual element.</p>
+<pre>+----------------------------------------------------------+
+| Cadence | Back | Library | Setlist | Pen | Highlighter  |
+|----------------------------------------------------------|
+|                                                          |
+|                 SCORE / NOTATION SURFACE                |
+|             annotation layer above score                |
+|                                                          |
+|  &lt; previous       page / spread       next &gt;             |
+|----------------------------------------------------------|
+| Play/Pause | Tempo | Zoom | Eraser | Settings           |
++----------------------------------------------------------+</pre>
+
+<h2>Architecture</h2>
+<p>The dependency direction is UI components → application services → persistence interfaces → Tauri/Rust filesystem implementation. Rendering, annotations, library/setlists, audio, and persistence are separate responsibilities. This structure permits the initial JSON storage to be replaced by SQLite later without requiring UI components to access storage APIs directly.</p>
+
+<h1>Section 4: Verification</h1>
+<h2>Demo</h2>
+<p>The final demonstration will be performed entirely offline using a multi-page PDF, a MusicXML score, and representative annotation fixtures. The demonstration will import both scores, add them to a setlist, open and navigate them in portrait and landscape, use touch and a tested keyboard/HID pedal input, draw and erase annotations with a tested stylus, close and relaunch to show persistence, and play the MusicXML score with synthesized notes, pause, and tempo control. If stretch items are complete, the demonstration will also show MP3/WAV linking, undo/redo, annotated-PDF export, and/or the visual metronome.</p>
+
+<h2>Testing</h2>
+<table>
+<tr><th>Area</th><th>Verification method</th><th>Acceptance criteria</th></tr>
+<tr><td>Import and rendering</td><td>Use valid PDF and MusicXML fixtures; import and open each while offline.</td><td>PDF pages are viewable; MusicXML notation is readable; invalid/unsupported files fail with a clear message.</td></tr>
+<tr><td>Viewport and navigation</td><td>Resize between portrait and landscape; use touch zones, keyboard keys, and tested HID pedal.</td><td>Single-page and two-page layouts are correct; forward/back movement is reliable; current position is preserved.</td></tr>
+<tr><td>Annotations</td><td>Draw pen/highlighter marks, erase them, zoom/pan, and test pen plus touch/palm input.</td><td>Marks are distinguishable, continuous, aligned after viewport changes, and touch does not create ink during the tested pen workflow.</td></tr>
+<tr><td>Persistence</td><td>Close and relaunch after importing, organizing, annotating, and creating a setlist.</td><td>Scores, metadata, folders, setlists, settings, and annotations return without silent loss; originals remain unchanged.</td></tr>
+<tr><td>Library and setlists</td><td>Search title, composer, instrument, and tags; reorder and perform a three-score setlist.</td><td>All matching records are returned offline; setlist order persists and performance moves between pieces.</td></tr>
+<tr><td>Audio</td><td>Play a standard MusicXML fixture, pause, change tempo; if attempted, link MP3/WAV to a PDF.</td><td>MusicXML produces audible notes at the selected tempo; missing/unsupported linked audio is reported safely.</td></tr>
+<tr><td>Stretch export</td><td>Export an annotated PDF and open it in a standard viewer; compare with the original.</td><td>Exported annotations are visible and printable; original score is not modified.</td></tr>
+<tr><td>Quality and platform</td><td>Run automated contract/build checks and manual tests on available Windows/Linux devices, recording OS, device, stylus, and input method.</td><td>Build and tests pass; limitations are documented; no core workflow requires network access.</td></tr>
+</table>
+
+<h2>Sources/Citation/Resources Links</h2>
+<ul>
+  <li><a href="../docs/AGENT_PROJECT_SPEC.md">Cadence living project specification</a> — architecture, functional requirements, acceptance signals, and timeline.</li>
+  <li><a href="../docs/FRONTEND_API.md">Cadence frontend API</a> — application service and persistence boundaries.</li>
+  <li><a href="https://tauri.app/">Tauri documentation</a></li>
+  <li><a href="https://react.dev/">React documentation</a></li>
+  <li><a href="https://www.typescriptlang.org/docs/">TypeScript documentation</a></li>
+  <li><a href="https://mozilla.github.io/pdf.js/">PDF.js documentation</a></li>
+  <li><a href="https://www.w3.org/TR/pointerevents/">W3C Pointer Events specification</a></li>
+  <li><a href="https://docs.rs/serde/latest/serde/">Serde documentation</a></li>
+  <li><a href="https://docs.rs/symphonia/latest/symphonia/">Symphonia documentation</a> — candidate audio runtime noted in the project specification.</li>
+</ul>
+
+</body>
+</html>

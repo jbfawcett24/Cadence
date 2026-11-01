@@ -18,6 +18,10 @@ pub fn run() {
             commands::resolve_score_file,
             commands::load_library,
             commands::save_library,
+            commands::load_folders,
+            commands::save_folders,
+            commands::move_score,
+            commands::move_folder,
             commands::load_setlists,
             commands::save_setlists,
             commands::load_annotations,
@@ -35,6 +39,7 @@ pub fn run() {
 
 mod commands {
     use std::{
+        collections::HashSet,
         fs,
         path::{Path, PathBuf},
     };
@@ -290,6 +295,135 @@ mod commands {
     pub fn save_library(app: AppHandle, contents: String) -> Result<(), String> {
         validate_json_array(&contents, "library")?;
         save_json(&app, "library.json", contents)
+    }
+
+    #[tauri::command]
+    pub fn load_folders(app: AppHandle) -> Result<Option<String>, String> {
+        load_json(&app, "folders.json")
+    }
+
+    #[tauri::command]
+    pub fn save_folders(app: AppHandle, contents: String) -> Result<(), String> {
+        validate_json_array(&contents, "folders")?;
+        save_json(&app, "folders.json", contents)
+    }
+
+    fn load_array(
+        app: &AppHandle,
+        filename: &str,
+        kind: &str,
+    ) -> Result<Vec<serde_json::Value>, String> {
+        let contents = load_json(app, filename)?.unwrap_or_else(|| "[]".to_string());
+        serde_json::from_str(&contents).map_err(|error| format!("invalid {kind} JSON: {error}"))
+    }
+
+    fn record_id(record: &serde_json::Value) -> Option<&str> {
+        record.get("id").and_then(serde_json::Value::as_str)
+    }
+
+    fn folder_parent(record: &serde_json::Value) -> Option<&str> {
+        record.get("parentId").and_then(serde_json::Value::as_str)
+    }
+
+    #[tauri::command]
+    pub fn move_score(
+        app: AppHandle,
+        score_id: String,
+        folder_id: Option<String>,
+    ) -> Result<(), String> {
+        validate_id(&score_id)?;
+        if let Some(folder_id) = &folder_id {
+            validate_id(folder_id)?;
+            let folders = load_array(&app, "folders.json", "folders")?;
+            if !folders
+                .iter()
+                .any(|folder| record_id(folder) == Some(folder_id.as_str()))
+            {
+                return Err("destination folder was not found".to_string());
+            }
+        }
+
+        let mut scores = load_array(&app, "library.json", "library")?;
+        let score = scores
+            .iter_mut()
+            .find(|score| record_id(score) == Some(score_id.as_str()))
+            .ok_or_else(|| "score was not found".to_string())?;
+        score["folderId"] = folder_id.map_or(serde_json::Value::Null, serde_json::Value::String);
+        save_json(
+            &app,
+            "library.json",
+            serde_json::to_string_pretty(&scores).map_err(|error| error.to_string())?,
+        )
+    }
+
+    #[tauri::command]
+    pub fn move_folder(
+        app: AppHandle,
+        folder_id: String,
+        parent_id: Option<String>,
+    ) -> Result<(), String> {
+        validate_id(&folder_id)?;
+        if let Some(parent_id) = &parent_id {
+            validate_id(parent_id)?;
+            if parent_id == &folder_id {
+                return Err("a folder cannot be moved into itself".to_string());
+            }
+        }
+
+        let mut folders = load_array(&app, "folders.json", "folders")?;
+        if !folders
+            .iter()
+            .any(|folder| record_id(folder) == Some(folder_id.as_str()))
+        {
+            return Err("folder was not found".to_string());
+        }
+        if let Some(parent_id) = &parent_id {
+            if !folders
+                .iter()
+                .any(|folder| record_id(folder) == Some(parent_id.as_str()))
+            {
+                return Err("destination folder was not found".to_string());
+            }
+            let moving_name = folders
+                .iter()
+                .find(|folder| record_id(folder) == Some(folder_id.as_str()))
+                .and_then(|folder| folder.get("name"))
+                .and_then(serde_json::Value::as_str)
+                .ok_or_else(|| "folder has no name".to_string())?;
+            if folders.iter().any(|folder| {
+                record_id(folder) != Some(folder_id.as_str())
+                    && record_id(folder) != Some(parent_id.as_str())
+                    && folder_parent(folder) == Some(parent_id.as_str())
+                    && folder.get("name").and_then(serde_json::Value::as_str) == Some(moving_name)
+            }) {
+                return Err("folder already exists in the destination".to_string());
+            }
+            let mut current = Some(parent_id.as_str());
+            let mut visited = HashSet::new();
+            while let Some(id) = current {
+                if !visited.insert(id) {
+                    return Err("folder hierarchy contains a cycle".to_string());
+                }
+                if id == folder_id {
+                    return Err("a folder cannot be moved into its descendant".to_string());
+                }
+                current = folders
+                    .iter()
+                    .find(|folder| record_id(folder) == Some(id))
+                    .and_then(folder_parent);
+            }
+        }
+
+        let folder = folders
+            .iter_mut()
+            .find(|folder| record_id(folder) == Some(folder_id.as_str()))
+            .expect("folder existence checked");
+        folder["parentId"] = parent_id.map_or(serde_json::Value::Null, serde_json::Value::String);
+        save_json(
+            &app,
+            "folders.json",
+            serde_json::to_string_pretty(&folders).map_err(|error| error.to_string())?,
+        )
     }
 
     #[tauri::command]

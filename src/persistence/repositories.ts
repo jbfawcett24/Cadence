@@ -3,6 +3,7 @@ import type {
   AppSettings,
   AudioLink,
   AudioLinkDraft,
+  Folder,
   Score,
   Setlist,
   Stroke,
@@ -17,6 +18,16 @@ export interface ScoreRepository {
   search(query: string): Promise<Score[]>
   resolveFile(id: string): Promise<string>
   deleteManagedFile(id: string): Promise<void>
+  moveToFolder(id: string, folderId: string | null): Promise<void>
+}
+
+export interface FolderRepository {
+  create(folder: Folder): Promise<void>
+  get(id: string): Promise<Folder | undefined>
+  update(folder: Folder): Promise<void>
+  delete(id: string): Promise<void>
+  list(): Promise<Folder[]>
+  move(id: string, newParentId: string | null): Promise<void>
 }
 
 export interface SetlistRepository {

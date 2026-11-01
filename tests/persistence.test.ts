@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import type { TauriCommandClient } from '../src/bridge/tauriCommands.ts'
-import { TauriAnnotationRepository, TauriScoreRepository, TauriSetlistRepository } from '../src/persistence/tauriRepositories.ts'
-import type { AnnotationDocument, AppSettings, AudioLink, ManagedScoreFile, Score, Setlist } from '../src/shared/types.ts'
+import { TauriAnnotationRepository, TauriFolderRepository, TauriScoreRepository, TauriSetlistRepository } from '../src/persistence/tauriRepositories.ts'
+import type { AnnotationDocument, AppSettings, AudioLink, Folder, ManagedScoreFile, Score, Setlist } from '../src/shared/types.ts'
 
 class MemoryCommandClient implements TauriCommandClient {
   private scores: Score[] = []
+  private folders: Folder[] = []
   private setlists: Setlist[] = []
   private annotations = new Map<string, AnnotationDocument>()
   private audio = new Map<string, AudioLink>()
@@ -24,6 +25,18 @@ class MemoryCommandClient implements TauriCommandClient {
 
   async loadLibrary() { return structuredClone(this.scores) }
   async saveLibrary(scores: Score[]) { this.scores = structuredClone(scores) }
+  async loadFolders() { return structuredClone(this.folders) }
+  async saveFolders(folders: Folder[]) { this.folders = structuredClone(folders) }
+  async moveScore(scoreId: string, folderId: string | null) {
+    const score = this.scores.find((candidate) => candidate.id === scoreId)
+    if (!score) throw new Error('score not found')
+    score.folderId = folderId
+  }
+  async moveFolder(folderId: string, parentId: string | null) {
+    const folder = this.folders.find((candidate) => candidate.id === folderId)
+    if (!folder) throw new Error('folder not found')
+    folder.parentId = parentId
+  }
   async loadSetlists() { return structuredClone(this.setlists) }
   async saveSetlists(setlists: Setlist[]) { this.setlists = structuredClone(setlists) }
 
@@ -54,6 +67,7 @@ const score: Score = {
   tags: ['practice'],
   format: 'pdf',
   managedFilePath: '/managed/example.pdf',
+  folderId: null,
   createdAt: '2026-09-28T00:00:00.000Z',
   updatedAt: '2026-09-28T00:00:00.000Z',
 }
@@ -69,6 +83,25 @@ test('score repository round-trips created and updated records', async () => {
   const updated = { ...score, title: 'Updated Score' }
   await repository.update(updated)
   assert.equal((await repository.get(score.id))?.title, 'Updated Score')
+})
+
+test('folders can be created and scores moved into them', async () => {
+  const client = new MemoryCommandClient()
+  const folders = new TauriFolderRepository(client)
+  const scores = new TauriScoreRepository(client)
+  const folder: Folder = {
+    id: 'folder-1',
+    name: 'Practice',
+    parentId: null,
+    createdAt: '2026-09-28T00:00:00.000Z',
+    updatedAt: '2026-09-28T00:00:00.000Z',
+  }
+
+  await scores.create(score)
+  await folders.create(folder)
+  await scores.moveToFolder(score.id, folder.id)
+  assert.equal((await scores.get(score.id))?.folderId, folder.id)
+  assert.deepEqual(await folders.get(folder.id), folder)
 })
 
 test('setlists preserve ordered score IDs across persistence', async () => {

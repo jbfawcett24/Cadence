@@ -10,6 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize
   loading?: boolean
   pressed?: boolean
+  onClick?: () => void
 }
 
 export default function Button({
@@ -21,6 +22,7 @@ export default function Button({
   pressed = false,
   disabled = false,
   type = 'button',
+  onClick,
   ...buttonProps
 }: ButtonProps) {
   const isDisabled = disabled || loading
@@ -36,6 +38,7 @@ export default function Button({
         event.preventDefault()
         buttonProps.onContextMenu?.(event)
       }}
+      onClick={onClick}
       css={getButtonStyles({ variant, size, disabled: isDisabled })}
     >
       {loading && <span aria-hidden="true"></span>}

@@ -9,8 +9,33 @@ import ScoreReader from './components/ScoreReader'
 import Button from './components/Button'
 import { css } from '@emotion/react'
 import IconButton from './components/IconButton'
+import ScoreCard from './components/ScoreCard'
+import ScoreRow from './components/ScoreRow'
+import type { Folder, Score } from './shared/types'
+import { theme } from './components/theme'
 
 const cadence = createFrontendApi()
+
+const dummyFolder: Folder = {
+  id: 'dummy-folder',
+  name: 'Practice Pieces',
+  parentId: null,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+}
+
+const dummyScore: Score = {
+  id: 'dummy-score',
+  title: 'Clair de Lune',
+  composer: 'Claude Debussy',
+  instrument: 'Piano',
+  tags: ['dummy', 'practice'],
+  folderId: dummyFolder.id,
+  format: 'pdf',
+  managedFilePath: '/dummy/clair-de-lune.pdf',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+}
 
 function PlusIcon() {
   return (
@@ -32,6 +57,7 @@ export default function App() {
   const [selectedScoreId, setSelectedScoreId] = useState<string>()
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [mode, setMode] = useState<'grid' | 'row'>('grid')
 
   async function handleChooseFile() {
     const selected = await open({
@@ -90,46 +116,86 @@ export default function App() {
     return <ScoreReader scoreId={selectedScoreId} onBack={() => setSelectedScoreId(undefined)} />
   }
 
-  return (
-    <div
-      css={css`
-        width: 100%;
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        gap: 40px;
-      `}
-    >
-      <div
-        css={css`
-          display: flex;
-          gap: 10px;
-          align-items: flex-end;
-        `}
-      >
-        <Button text="Press Me!" size="xs" />
-        <Button text="Press Me!" size='sm' />
-        <Button text="Press Me!" size='md' />
-        <Button text="Press Me!" size='lg' />
-        <Button text="Press Me!" size='xl' />
-        <Button text="Press Me!" size='xxl' disabled />
-      </div>
-      <div>
-        <Button text="Secondary" variant='secondary' />
-        <Button text="Danger" variant='danger' />
-      </div>
-      <div>
-        <IconButton
-          icon={<PlusIcon />}
-          label="Add score"
-          onClick={() => setImportScore(true)}
-          variant='danger'
-        />
-      </div>
-    </div>
-  )
+  // return (
+  //   <div
+  //     css={css`
+  //       width: 100%;
+  //       height: 100vh;
+  //       display: flex;
+  //       justify-content: center;
+  //       align-items: center;
+  //       flex-direction: column;
+  //       gap: 40px;
+  //     `}
+  //   >
+  //     <div
+  //       css={css`
+  //         display: flex;
+  //         gap: 10px;
+  //         align-items: flex-end;
+  //       `}
+  //     >
+  //       <Button text="Press Me!" size="xs" />
+  //       <Button text="Press Me!" size='sm' />
+  //       <Button text="Press Me!" size='md' />
+  //       <Button text="Press Me!" size='lg' />
+  //       <Button text="Press Me!" size='xl' />
+  //       <Button text="Press Me!" size='xxl' disabled />
+  //     </div>
+  //     <div>
+  //       <Button text="Secondary" variant='secondary' />
+  //       <Button text="Danger" variant='danger' />
+  //     </div>
+  //     <div>
+  //       <IconButton
+  //         icon={<PlusIcon />}
+  //         label="Add score"
+  //         onClick={() => setImportScore(true)}
+  //         variant='danger'
+  //       />
+  //     </div>
+  //     <div
+  //       css={css`
+  //         display: flex;
+  //         gap: 16px;
+  //       `}
+  //     >
+  //       <ScoreCard
+  //         item={{ type: 'score', score: dummyScore }}
+  //         onClick={() => undefined}
+  //       />
+  //       <ScoreCard
+  //         item={{ type: 'folder', folder: dummyFolder }}
+  //         onClick={() => undefined}
+  //       />
+  //     </div>
+  //     <div
+  //       css={css`
+  //         display: flex;
+  //         width: 100%;
+  //         flex-direction: column;
+  //         background-color: ${theme.colors.surface};
+  //       `}
+  //     >
+  //       <ScoreRow
+  //         item={{ type: 'score', score: dummyScore }}
+  //         onClick={() => undefined}
+  //       />
+  //       <div
+  //         aria-hidden="true"
+  //         css={css`
+  //           width: 100%;
+  //           height: 1px;
+  //           background: ${theme.colors.divider};
+  //         `}
+  //       />
+  //       <ScoreRow
+  //         item={{ type: 'folder', folder: dummyFolder }}
+  //         onClick={() => undefined}
+  //       />
+  //     </div>
+  //   </div>
+  // )
 
   return (
     <div>
@@ -140,6 +206,17 @@ export default function App() {
             <button type="button" onClick={() => setImportScore((isOpen) => !isOpen)}>
               {importScore ? 'Close import' : 'Import score'}
             </button>
+            <Button
+              onClick={() => {
+                if (mode === 'grid') {
+                  setMode('row')
+                } else {
+                  setMode('grid')
+                }
+              }}
+            >
+              Mode
+            </Button>
             <button type="button" onClick={() => void handleQuit()}>
               Quit
             </button>
@@ -183,6 +260,7 @@ export default function App() {
       <LibraryList
         refreshToken={libraryRefreshToken}
         onSelectScore={setSelectedScoreId}
+        mode={mode}
       />
     </div>
   )

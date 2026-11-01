@@ -6,11 +6,31 @@ export interface Score {
   composer?: string
   instrument?: string
   tags: string[]
+  folderId: string | null
   format: ScoreFormat
   managedFilePath: string
   originalFilePath?: string
   createdAt: string
   updatedAt: string
+}
+
+export interface Folder {
+  id: string
+  name: string
+  parentId: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LibraryFolderNode {
+  folder: Folder
+  scores: Score[]
+  children: LibraryFolderNode[]
+}
+
+export interface LibraryTree {
+  rootScores: Score[]
+  folders: LibraryFolderNode[]
 }
 
 export interface Setlist {

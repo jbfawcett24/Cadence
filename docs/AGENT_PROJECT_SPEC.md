@@ -45,7 +45,7 @@ Core product promise: a musician can import scores, organize them, read them in 
 The application is organized into domain-oriented frontend modules behind a small persistence boundary:
 
 - **Score/document:** shared score model for PDF and MusicXML documents, active page or measure, viewport state, and renderer-specific data.
-- **Library:** score import, metadata, search, listing, opening, and removal. The library does not render score content.
+- **Library:** score import, metadata, search, folder-tree listing, folder management, opening, and removal. The library does not render score content.
 - **Setlist:** creation, naming, ordering, and performance navigation. Setlists reference scores by stable score ID rather than duplicating score records.
 - **Annotations:** page-organized vector strokes for pen and highlighter tools, eraser operations, undo/redo, coordinate transforms, and annotation serialization. The annotation layer is independent of the score renderer.
 - **Audio:** MusicXML synthesis and linked local audio playback, including play/pause, tempo, and playback state.
@@ -56,9 +56,9 @@ The intended dependency direction is UI components → application services → 
 
 ### Initial local storage strategy
 
-Imported PDF and MusicXML files are copied into an application-managed library directory. The original files are never moved or deleted. Library metadata stores the stable score ID, managed file path, optional original path, format, and user metadata. Setlists and annotations refer to scores by stable ID.
+Imported PDF and MusicXML files are copied into an application-managed library directory. The original files are never moved or deleted. Library metadata stores the stable score ID, managed file path, optional original path, format, user metadata, and a nullable folder ID. Folders are named self-referencing library records; setlists and annotations refer to scores by stable ID.
 
-The initial persistence implementation uses separate local JSON files for library metadata, setlists, annotations, audio links, and settings. These files are an implementation detail behind persistence interfaces so the storage engine can later be replaced with SQLite without changing UI components or domain services.
+The initial persistence implementation uses separate local JSON files for library metadata, folders, setlists, annotations, audio links, and settings. These files are an implementation detail behind persistence interfaces so the storage engine can later be replaced with SQLite without changing UI components or domain services. Folder and score moves are exposed as domain operations rather than requiring callers to replace whole collections.
 
 Linked MP3/WAV files initially remain at their original paths and are recorded as local links. Missing linked media must be reported safely. Managed audio copies may be considered separately later.
 
@@ -87,7 +87,10 @@ The Tauri bridge covers the complete local-data lifecycle. On startup, applicati
 The initial command boundary includes these domain operations:
 
 - `import_score_file` — validate a PDF or MusicXML source and copy it into managed score storage.
-- `load_library` and `save_library` — load or atomically persist library metadata.
+- `load_library` and `save_library` — load or atomically persist score metadata.
+- `load_folders` and `save_folders` — load or atomically persist folder metadata.
+- `move_score` — move one score to a folder or the library root after validating the destination.
+- `move_folder` — move one folder after validating the destination, hierarchy, and sibling-name constraints.
 - `load_setlists` and `save_setlists` — load or atomically persist setlist data.
 - `resolve_score_file` — return the managed file reference for opening an existing score.
 - `load_annotations` and `save_annotations` — load or atomically persist a score’s page-organized annotation document.
