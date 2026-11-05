@@ -100,6 +100,11 @@ export default function ScoreReader({ scoreId, onBack }: ScoreReaderProps) {
             pageNumber,
             annotations,
             inputModeRef,
+            () => {
+              if (inputModeRef.current !== 'touch') return
+              inputModeRef.current = 'pen'
+              setInputMode('pen')
+            },
           )
         }
 
@@ -172,6 +177,7 @@ function enableInk(
   pageNumber: number,
   annotations: AnnotationDocument,
   inputModeRef: { current: 'pen' | 'touch' | 'eraser' },
+  onPenDetected: () => void,
 ) {
   let points: Point[] = []
 
@@ -200,8 +206,19 @@ function enableInk(
   }
 
   eventTarget.addEventListener('pointerdown', (event) => {
-    const acceptsPointer = inputModeRef.current !== 'touch'
-    if (!acceptsPointer) return
+    // Pointer Events identify active styluses as `pen` and fingers as `touch`.
+    // Never treat a touch contact as ink, even when Pen or Eraser is selected;
+    // this is what provides the palm/finger rejection behavior.
+    if (event.pointerType === 'touch') return
+
+    if (event.pointerType === 'pen') {
+      onPenDetected()
+    } else if (event.pointerType !== 'mouse' || inputModeRef.current === 'touch') {
+      // Mouse input remains useful for desktop testing when a drawing mode is
+      // selected. Unknown pointer types are ignored rather than risking ink.
+      return
+    }
+
     event.preventDefault()
     eventTarget.setPointerCapture(event.pointerId)
     const point = getPoint(event)
@@ -210,6 +227,12 @@ function enableInk(
     } else {
       points = [point]
     }
+  })
+
+  eventTarget.addEventListener('pointercancel', (event) => {
+    if (!eventTarget.hasPointerCapture(event.pointerId)) return
+    eventTarget.releasePointerCapture(event.pointerId)
+    points = []
   })
 
   eventTarget.addEventListener('pointermove', (event) => {

@@ -63,7 +63,6 @@ class MemoryCommandClient implements TauriCommandClient {
 const score: Score = {
   id: 'score-1',
   title: 'Example Score',
-  composer: 'Example Composer',
   tags: ['practice'],
   format: 'pdf',
   managedFilePath: '/managed/example.pdf',
@@ -78,7 +77,7 @@ test('score repository round-trips created and updated records', async () => {
 
   await repository.create(score)
   assert.deepEqual(await repository.get(score.id), score)
-  assert.equal((await repository.search('composer'))[0]?.id, score.id)
+  assert.equal((await repository.search('example'))[0]?.id, score.id)
 
   const updated = { ...score, title: 'Updated Score' }
   await repository.update(updated)

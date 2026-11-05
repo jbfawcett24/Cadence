@@ -45,12 +45,9 @@
   box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 25%);
 }
 
-.score-reader-pen .score-reader-page,
-.score-reader-eraser .score-reader-page {
-  touch-action: none;
-}
-
-.score-reader-touch .score-reader-page {
+/* Keep vertical finger scrolling available while pen contacts are filtered in
+   the Pointer Events handler. */
+.score-reader-page {
   touch-action: pan-y;
 }
 
@@ -67,4 +64,3 @@
   height: 100% !important;
   pointer-events: none;
 }
-

@@ -11,10 +11,11 @@ const cadence = createFrontendApi()
 interface LibraryListProps {
   refreshToken: number
   onSelectScore: (scoreId: string) => void
+  onCurrentFolderChange: (folderId: string | null) => void
   mode?: 'grid' | 'row'
 }
 
-export default function LibraryList({ refreshToken, onSelectScore, mode = 'grid' }: LibraryListProps) {
+export default function LibraryList({ refreshToken, onSelectScore, onCurrentFolderChange, mode = 'grid' }: LibraryListProps) {
   const [scores, setScores] = useState<Score[]>([])
   const [folders, setFolders] = useState<LibraryFolderNode[]>([])
   const [folderPath, setFolderPath] = useState<LibraryFolderNode[]>([])
@@ -34,6 +35,7 @@ export default function LibraryList({ refreshToken, onSelectScore, mode = 'grid'
           setScores(tree.rootScores)
           setFolders(tree.folders)
           setFolderPath([])
+          onCurrentFolderChange(null)
         }
       } catch (error) {
         if (!cancelled) {
@@ -49,7 +51,7 @@ export default function LibraryList({ refreshToken, onSelectScore, mode = 'grid'
     return () => {
       cancelled = true
     }
-  }, [refreshToken])
+  }, [onCurrentFolderChange, refreshToken])
 
   const currentFolder = folderPath.at(-1)
   const displayedScores = currentFolder?.scores ?? scores
@@ -61,13 +63,19 @@ export default function LibraryList({ refreshToken, onSelectScore, mode = 'grid'
         key={folder.folder.id}
         item={{ type: 'folder', folder: folder.folder }
         }
-        onClick={() => setFolderPath((path) => [...path, folder])
+        onClick={() => {
+          setFolderPath((path) => [...path, folder])
+          onCurrentFolderChange(folder.folder.id)
+        }
         }
       />
       : <ScoreRow
         key={folder.folder.id}
         item={{ type: 'folder', folder: folder.folder }}
-        onClick={() => setFolderPath((path) => [...path, folder])}
+        onClick={() => {
+          setFolderPath((path) => [...path, folder])
+          onCurrentFolderChange(folder.folder.id)
+        }}
       />
     )
   }
@@ -92,7 +100,14 @@ export default function LibraryList({ refreshToken, onSelectScore, mode = 'grid'
       {isLoading && <p>Loading library...</p>}
       {errorMessage && <p role="alert">{errorMessage}</p>}
       {!isLoading && !errorMessage && folderPath.length > 0 && (
-        <button type="button" onClick={() => setFolderPath((path) => path.slice(0, -1))}>
+        <button
+          type="button"
+          onClick={() => {
+            const nextPath = folderPath.slice(0, -1)
+            setFolderPath(nextPath)
+            onCurrentFolderChange(nextPath.at(-1)?.folder.id ?? null)
+          }}
+        >
           Back
         </button>
       )}
@@ -127,7 +142,7 @@ const gridItemsStyles = css`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: ${theme.spacing.xl};
-  padding: ${theme.spacing.xl};
+  padding: ${theme.spacing.xl} ${theme.spacing.xl} 0;
 `
 
 const rowItemsStyles = css`

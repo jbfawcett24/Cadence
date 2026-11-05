@@ -1,7 +1,47 @@
 import type { ButtonHTMLAttributes } from 'react'
+import { css } from '@emotion/react'
 import type { Icon } from '@phosphor-icons/react'
 import { type ButtonSize, type ButtonVariant } from './Button'
 import { getIconButtonStyles } from './theme'
+
+const iconChangeStyles = css`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: icon-button-change 160ms ease-out;
+
+  @keyframes icon-button-change {
+    from {
+      opacity: 0;
+      transform: scale(0.7);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+`
+
+const iconKeys = new WeakMap<object, string>()
+let nextIconKey = 0
+
+function getIconKey(icon: Icon) {
+  const iconObject = icon as unknown as object
+  let key = iconKeys.get(iconObject)
+
+  if (!key) {
+    key = `icon-${nextIconKey}`
+    nextIconKey += 1
+    iconKeys.set(iconObject, key)
+  }
+
+  return key
+}
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: Icon
@@ -43,7 +83,9 @@ export default function IconButton({
       onClick={onClick}
       css={getIconButtonStyles({ variant, size, disabled: isDisabled })}
     >
-      <IconComponent color="currentColor" size="1.25em" weight="bold" aria-hidden="true" />
+      <span key={getIconKey(IconComponent)} css={iconChangeStyles} aria-hidden="true">
+        <IconComponent color="currentColor" size="1.25em" weight="bold" />
+      </span>
     </button>
   )
 }

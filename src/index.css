@@ -4,9 +4,20 @@
   padding: 0;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  display: flow-root;
+}
+
 body {
   min-width: 320px;
-  min-height: 100dvh;
+  min-height: 0;
+  overflow-x: hidden;
 }
 
 button:focus-visible {

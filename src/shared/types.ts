@@ -3,7 +3,6 @@ export type ScoreFormat = 'pdf' | 'musicxml'
 export interface Score {
   id: string
   title: string
-  composer?: string
   instrument?: string
   tags: string[]
   folderId: string | null

@@ -13,7 +13,7 @@ export interface StartupData {
 export interface CadenceApi {
   services: ApplicationServices
   startup(): Promise<StartupData>
-  importScore(sourcePath: string, metadata?: Partial<Pick<Score, 'title' | 'composer' | 'instrument' | 'tags' | 'folderId'>>): Promise<Score>
+  importScore(sourcePath: string, metadata?: Partial<Pick<Score, 'title' | 'instrument' | 'tags' | 'folderId'>>): Promise<Score>
   openScore(scoreId: string): Promise<{ score: Score; filePath: string }>
   removeScore(scoreId: string): Promise<void>
   linkAudio(link: AudioLinkDraft): Promise<AudioLink>
@@ -40,7 +40,6 @@ export function createFrontendApi(): CadenceApi {
       const score: Score = {
         id: managed.managedPath.split(/[\\/]/).pop()?.split('.')[0] ?? crypto.randomUUID(),
         title: metadata.title ?? sourcePath.split(/[\\/]/).pop()?.replace(/\.[^.]+$/, '') ?? 'Untitled score',
-        composer: metadata.composer,
         instrument: metadata.instrument,
         tags: metadata.tags ?? [],
         folderId: metadata.folderId ?? null,

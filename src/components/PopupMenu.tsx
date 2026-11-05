@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
 import { css } from '@emotion/react'
 import { theme } from './theme'
 
@@ -7,9 +8,11 @@ export interface PopupMenuProps {
   onClose: () => void
   anchorRef: RefObject<HTMLElement | null>
   children: ReactNode
+  width?: string
+  fixed?: boolean
 }
 
-export default function PopupMenu({ open, onClose, anchorRef, children }: PopupMenuProps) {
+export default function PopupMenu({ open, onClose, anchorRef, children, width = '128px', fixed = false }: PopupMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [isMounted, setIsMounted] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
@@ -49,6 +52,14 @@ export default function PopupMenu({ open, onClose, anchorRef, children }: PopupM
         Math.min(left, window.innerWidth - menuWidth - viewportPadding),
       )
 
+      if (fixed) {
+        setMenuPosition({
+          top: anchorRect.bottom,
+          left: clampedLeft,
+        })
+        return
+      }
+
       if (offsetParent instanceof HTMLElement) {
         const parentRect = offsetParent.getBoundingClientRect()
         setMenuPosition({
@@ -72,7 +83,7 @@ export default function PopupMenu({ open, onClose, anchorRef, children }: PopupM
       window.removeEventListener('resize', updatePosition)
       window.removeEventListener('scroll', updatePosition, true)
     }
-  }, [anchorRef, isMounted, open])
+  }, [anchorRef, fixed, isMounted, open])
 
   useEffect(() => {
     if (!open) return
@@ -90,15 +101,15 @@ export default function PopupMenu({ open, onClose, anchorRef, children }: PopupM
 
   if (!isMounted) return null
 
-  return (
+  const menu = (
     <div
       ref={menuRef}
       css={css`
-        position: absolute;
-        z-index: 20;
+        position: ${fixed ? 'fixed' : 'absolute'};
+        z-index: ${fixed ? 40 : 20};
         top: ${menuPosition.top}px;
         left: ${menuPosition.left}px;
-        width: 128px;
+        width: ${width};
         height: auto;
         border-radius: ${theme.radii.medium};
         background: ${theme.colors.surface};
@@ -110,4 +121,6 @@ export default function PopupMenu({ open, onClose, anchorRef, children }: PopupM
       `}
     >{children}</div>
   )
+
+  return fixed ? createPortal(menu, document.body) : menu
 }

@@ -56,7 +56,7 @@ export class TauriScoreRepository implements ScoreRepository {
     const normalizedQuery = query.trim().toLocaleLowerCase()
     if (!normalizedQuery) return this.client.loadLibrary()
     return (await this.client.loadLibrary()).filter((score) =>
-      [score.title, score.composer, score.instrument, ...score.tags]
+      [score.title, score.instrument, ...score.tags]
         .filter(Boolean)
         .some((field) => field!.toLocaleLowerCase().includes(normalizedQuery)),
     )
