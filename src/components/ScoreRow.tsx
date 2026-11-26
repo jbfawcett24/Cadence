@@ -18,6 +18,13 @@ export default function ScoreRow({
   onRename,
   onDuplicate,
   onDelete,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  isDropTarget = false,
 }: ScoreCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
@@ -55,6 +62,12 @@ export default function ScoreRow({
   return (
     <div
       data-score-row
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
       css={css`
         position: relative;
         z-index: ${isMenuOpen ? 10 : 0};
@@ -69,8 +82,10 @@ export default function ScoreRow({
         color: ${theme.colors.textPrimary};
         background: ${theme.colors.surface};
         box-shadow: none;
+        outline: ${isDropTarget ? `3px solid ${theme.colors.focus}` : 'none'};
+        outline-offset: 3px;
         transform: translateY(0);
-        transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+        transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease, outline-color 150ms ease;
 
         &:hover {
           background: ${theme.colors.surfaceSubtle};

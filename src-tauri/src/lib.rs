@@ -384,20 +384,6 @@ mod commands {
             {
                 return Err("destination folder was not found".to_string());
             }
-            let moving_name = folders
-                .iter()
-                .find(|folder| record_id(folder) == Some(folder_id.as_str()))
-                .and_then(|folder| folder.get("name"))
-                .and_then(serde_json::Value::as_str)
-                .ok_or_else(|| "folder has no name".to_string())?;
-            if folders.iter().any(|folder| {
-                record_id(folder) != Some(folder_id.as_str())
-                    && record_id(folder) != Some(parent_id.as_str())
-                    && folder_parent(folder) == Some(parent_id.as_str())
-                    && folder.get("name").and_then(serde_json::Value::as_str) == Some(moving_name)
-            }) {
-                return Err("folder already exists in the destination".to_string());
-            }
             let mut current = Some(parent_id.as_str());
             let mut visited = HashSet::new();
             while let Some(id) = current {
@@ -412,6 +398,20 @@ mod commands {
                     .find(|folder| record_id(folder) == Some(id))
                     .and_then(folder_parent);
             }
+        }
+
+        let moving_name = folders
+            .iter()
+            .find(|folder| record_id(folder) == Some(folder_id.as_str()))
+            .and_then(|folder| folder.get("name"))
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "folder has no name".to_string())?;
+        if folders.iter().any(|folder| {
+            record_id(folder) != Some(folder_id.as_str())
+                && folder_parent(folder) == parent_id.as_deref()
+                && folder.get("name").and_then(serde_json::Value::as_str) == Some(moving_name)
+        }) {
+            return Err("folder already exists in the destination".to_string());
         }
 
         let folder = folders

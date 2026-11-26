@@ -1,19 +1,61 @@
 
 .score-reader {
-  display: flex;
+  position: relative;
   width: 100vw;
   height: 100vh;
-  flex-direction: column;
   overflow: hidden;
   background: #202124;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
 }
 
 .score-reader-header {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
   display: flex;
-  flex: 0 0 2.75rem;
   align-items: center;
-  padding: 0 0.75rem;
-  background: #182b49;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.35rem 0.75rem;
+  background: rgb(24 43 73 / 82%);
+  box-shadow: 0 0.15rem 0.5rem rgb(0 0 0 / 20%);
+  pointer-events: auto;
+}
+
+.score-reader-pages {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.score-reader-page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 25%);
+  touch-action: none;
+}
+
+.score-reader-page-content {
+  position: relative;
+  flex: 0 0 auto;
+  transform-origin: center;
+  will-change: transform;
 }
 
 .score-reader-header button {
@@ -29,38 +71,40 @@
   outline: 2px solid #76a6e8;
 }
 
-.score-reader-pages {
-  width: 100%;
-  min-height: 0;
-  flex: 1;
-  overflow: auto;
-  padding: 1rem;
+.score-reader-page-count,
+.score-reader-error {
+  position: absolute;
+  z-index: 2;
+  bottom: 0.75rem;
+  left: 50%;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgb(0 0 0 / 65%);
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
-.score-reader-page {
-  position: relative;
-  width: min(100%, 60rem);
-  margin: 0 auto 1rem;
-  background: #ffffff;
-  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 25%);
+.score-reader-error {
+  top: 4rem;
+  bottom: auto;
+  border-radius: 0.35rem;
+  background: #8b1e2d;
 }
 
-/* Keep vertical finger scrolling available while pen contacts are filtered in
-   the Pointer Events handler. */
-.score-reader-page {
-  touch-action: pan-y;
-}
-
+/* The PDF canvas is sized in ScoreReader.tsx to fit the viewport while
+   retaining the page's aspect ratio. */
 .score-reader-page canvas {
   display: block;
-  width: 100%;
-  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .score-reader-page canvas.score-reader-ink {
   position: absolute;
   inset: 0;
-  width: 100% !important;
-  height: 100% !important;
+  margin: auto;
+  width: auto !important;
+  height: auto !important;
   pointer-events: none;
 }

@@ -11,6 +11,7 @@ interface ImportScoreFormProps {
   instrument: string
   instrumentOptions: string[]
   tags: string
+  tagOptions: string[]
   onTitleChange: (value: string) => void
   onInstrumentChange: (value: string) => void
   onTagsChange: (value: string) => void
@@ -56,6 +57,7 @@ export default function ImportScoreForm({
   instrument,
   instrumentOptions,
   tags,
+  tagOptions,
   onTitleChange,
   onInstrumentChange,
   onTagsChange,
@@ -66,9 +68,26 @@ export default function ImportScoreForm({
   const [isDragging, setIsDragging] = useState(false)
   const [isInstrumentMenuOpen, setIsInstrumentMenuOpen] = useState(false)
   const [highlightedInstrumentIndex, setHighlightedInstrumentIndex] = useState(0)
+  const [isTagMenuOpen, setIsTagMenuOpen] = useState(false)
+  const [highlightedTagIndex, setHighlightedTagIndex] = useState(0)
   const instrumentAnchorRef = useRef<HTMLDivElement>(null)
+  const tagAnchorRef = useRef<HTMLDivElement>(null)
   const instrumentSuggestions = instrumentOptions.filter((option) =>
     option.toLocaleLowerCase().includes(instrument.trim().toLocaleLowerCase()),
+  )
+  const tagInput = tags.slice(tags.lastIndexOf(',') + 1).trim()
+  const committedTags = tags
+    .split(',')
+    .slice(0, -1)
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+  const enteredTags = tags
+    .split(',')
+    .map((tag) => tag.trim().toLocaleLowerCase())
+    .filter(Boolean)
+  const tagSuggestions = tagOptions.filter((option) =>
+    !enteredTags.includes(option.toLocaleLowerCase()) &&
+    option.toLocaleLowerCase().includes(tagInput.toLocaleLowerCase()),
   )
 
   useEffect(() => {
@@ -124,6 +143,58 @@ export default function ImportScoreForm({
       selectInstrument(instrumentSuggestions[highlightedInstrumentIndex])
     } else if (event.key === 'Tab') {
       selectInstrument(instrumentSuggestions[highlightedInstrumentIndex])
+    }
+  }
+
+  function selectTag(option: string) {
+    onTagsChange(`${[...committedTags, option].join(', ')}, `)
+    setIsTagMenuOpen(false)
+    setHighlightedTagIndex(0)
+  }
+
+  function addTypedTag() {
+    const trimmedTag = tagInput.trim()
+    if (!trimmedTag) return false
+
+    onTagsChange(`${[...committedTags, trimmedTag].join(', ')}, `)
+    setIsTagMenuOpen(false)
+    setHighlightedTagIndex(0)
+    return true
+  }
+
+  function removeTag(indexToRemove: number) {
+    const nextTags = committedTags.filter((_, index) => index !== indexToRemove)
+    onTagsChange(`${nextTags.join(', ')}${tagInput ? `${nextTags.length ? ', ' : ''}${tagInput}` : nextTags.length ? ', ' : ''}`)
+  }
+
+  function handleTagKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') {
+      setIsTagMenuOpen(false)
+      return
+    }
+
+    if (event.key === 'Enter' && (!isTagMenuOpen || tagSuggestions.length === 0)) {
+      if (addTypedTag()) event.preventDefault()
+      return
+    }
+
+    if (!isTagMenuOpen || tagSuggestions.length === 0) {
+      if (event.key === 'ArrowDown' && tagInput) {
+        event.preventDefault()
+        setIsTagMenuOpen(true)
+      }
+      return
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setHighlightedTagIndex((index) => Math.min(index + 1, tagSuggestions.length - 1))
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setHighlightedTagIndex((index) => Math.max(index - 1, 0))
+    } else if (event.key === 'Enter' || event.key === 'Tab') {
+      if (event.key === 'Enter') event.preventDefault()
+      selectTag(tagSuggestions[highlightedTagIndex])
     }
   }
 
@@ -233,11 +304,148 @@ export default function ImportScoreForm({
           </PopupMenu>
         </div>
       </div>
-      <FormInput
-        label="Tags (e.g. practice, classical)"
-        value={tags}
-        onChange={(event) => onTagsChange(event.target.value)}
-      />
+      <div
+        ref={tagAnchorRef}
+        css={css`
+          position: relative;
+          width: 100%;
+        `}
+      >
+        <div
+          css={css`
+            display: flex;
+            width: 100%;
+            min-height: 48px;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: ${theme.spacing.xs};
+            padding: ${theme.spacing.xs} ${theme.spacing.medium};
+            border-radius: ${theme.radii.medium};
+            background: ${theme.colors.surface};
+            box-shadow: inset 2px 2px 4px rgb(163 177 198 / 55%), inset -2px -2px 4px rgb(255 255 255 / 90%);
+
+            &:focus-within {
+              outline: 3px solid rgb(76 141 255 / 35%);
+              outline-offset: 2px;
+            }
+          `}
+        >
+          {committedTags.map((tag, index) => (
+            <button
+              key={`${tag}-${index}`}
+              type="button"
+              aria-label={`Remove tag ${tag}`}
+              onClick={() => removeTag(index)}
+              css={css`
+                display: inline-flex;
+                align-items: center;
+                gap: ${theme.spacing.xs};
+                padding: 0.25rem ${theme.spacing.small};
+                border: 1px solid ${theme.colors.borderStrong};
+                border-radius: ${theme.radii.small};
+                color: ${theme.colors.textPrimary};
+                background: ${theme.colors.surfaceSubtle};
+                font: inherit;
+                font-size: 0.8125rem;
+                cursor: pointer;
+
+                &:hover,
+                &:focus-visible {
+                  border-color: ${theme.colors.primary};
+                  background: ${theme.colors.primarySoft};
+                  outline: none;
+                }
+              `}
+            >
+              <span>{tag}</span>
+              <span aria-hidden="true">×</span>
+            </button>
+          ))}
+          <FormInput
+            label="Tags (e.g. practice, classical)"
+            value={tagInput}
+            fullWidth
+            hideOnFocus
+            aria-controls="tag-suggestions"
+            aria-activedescendant={isTagMenuOpen ? `tag-suggestion-${highlightedTagIndex}` : undefined}
+            onKeyDown={handleTagKeyDown}
+            onFocus={() => {
+              if (tagInput) {
+                setHighlightedTagIndex(0)
+                setIsTagMenuOpen(true)
+              }
+            }}
+            onChange={(event) => {
+              const nextInput = event.target.value
+              onTagsChange(`${committedTags.join(', ')}${committedTags.length ? ', ' : ''}${nextInput}`)
+              setHighlightedTagIndex(0)
+              setIsTagMenuOpen(Boolean(nextInput.trim()))
+            }}
+            css={css`
+              flex: 1 1 12rem;
+              min-width: 12rem;
+              margin: 0;
+              padding-left: 0;
+              background: transparent;
+              box-shadow: none;
+
+              &:focus {
+                background: transparent;
+                box-shadow: none;
+              }
+            `}
+          />
+        </div>
+        <PopupMenu
+          open={isTagMenuOpen && Boolean(tagInput) && tagSuggestions.length > 0}
+          onClose={() => setIsTagMenuOpen(false)}
+          anchorRef={tagAnchorRef}
+          width="min(350px, calc(100vw - 16px))"
+          fixed
+        >
+          <div
+            id="tag-suggestions"
+            role="listbox"
+            aria-label="Tag suggestions"
+            css={css`
+              display: flex;
+              flex-direction: column;
+              padding: ${theme.spacing.xs};
+            `}
+          >
+            {tagSuggestions.map((option, index) => (
+              <button
+                key={option}
+                id={`tag-suggestion-${index}`}
+                type="button"
+                role="option"
+                aria-selected={index === highlightedTagIndex}
+                onClick={() => selectTag(option)}
+                css={css`
+                  width: 100%;
+                  padding: ${theme.spacing.small} ${theme.spacing.medium};
+                  border: 0;
+                  border-radius: ${theme.radii.small};
+                  color: ${theme.colors.textPrimary};
+                  background: transparent;
+                  font: inherit;
+                  text-align: left;
+                  cursor: pointer;
+
+                  &:hover,
+                  &:focus-visible,
+                  &[aria-selected="true"] {
+                    background: ${theme.colors.surfaceSubtle};
+                    outline: none;
+                  }
+                `}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </PopupMenu>
+      </div>
     </form>
   )
 }

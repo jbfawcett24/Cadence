@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type DragEventHandler } from 'react'
 import type { Folder, Score } from '../shared/types'
 import {
   CopyIcon,
@@ -18,15 +18,25 @@ export type ScoreCardActions = {
   onDelete?: () => void
 }
 
+export interface ScoreCardDragProps {
+  draggable?: boolean
+  onDragStart?: DragEventHandler<HTMLDivElement>
+  onDragEnd?: DragEventHandler<HTMLDivElement>
+  onDragOver?: DragEventHandler<HTMLDivElement>
+  onDragLeave?: DragEventHandler<HTMLDivElement>
+  onDrop?: DragEventHandler<HTMLDivElement>
+  isDropTarget?: boolean
+}
+
 export type ScoreCardProps =
-  | {
+  | ScoreCardDragProps & {
     item: { type: 'score'; score: Score }
     onClick?: () => void
     onRename?: ScoreCardActions['onRename']
     onDuplicate?: ScoreCardActions['onDuplicate']
     onDelete?: ScoreCardActions['onDelete']
   }
-  | {
+  | ScoreCardDragProps & {
     item: { type: 'folder'; folder: Folder }
     onClick?: () => void
     onRename?: ScoreCardActions['onRename']
@@ -40,6 +50,13 @@ export default function ScoreCard({
   onRename,
   onDuplicate,
   onDelete,
+  draggable,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  isDropTarget = false,
 }: ScoreCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
@@ -77,13 +94,19 @@ export default function ScoreCard({
   return (
     <div
       data-score-card
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
       css={css`
         position: relative;
         z-index: ${isMenuOpen ? 10 : 0};
         isolation: isolate;
         display: flex;
         min-width: 180px;
-        min-height: 150px;
+        min-height: 180px;
         padding: ${theme.spacing.large};
         flex-direction: column;
         align-items: center;
@@ -98,7 +121,9 @@ export default function ScoreCard({
         touch-action: manipulation;
         user-select: none;
         box-shadow: ${theme.shadows.raised};
-        transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+        outline: ${isDropTarget ? `3px solid ${theme.colors.focus}` : 'none'};
+        outline-offset: 3px;
+        transition: background 150ms ease, box-shadow 150ms ease, transform 150ms ease, outline-color 150ms ease;
 
         &:hover {
           background: ${theme.colors.surfaceSubtle};

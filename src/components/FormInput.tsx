@@ -4,9 +4,11 @@ import { theme } from './theme'
 
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string
+  fullWidth?: boolean
+  hideOnFocus?: boolean
 }
 
-export default function FormInput({ label, placeholder, ...inputProps }: FormInputProps) {
+export default function FormInput({ label, placeholder, fullWidth = false, hideOnFocus = false, ...inputProps }: FormInputProps) {
   return (
     <input
       {...inputProps}
@@ -14,7 +16,7 @@ export default function FormInput({ label, placeholder, ...inputProps }: FormInp
       placeholder={placeholder ?? label}
       css={css`
         display: block;
-        width: min(350px, 100%);
+        width: ${fullWidth ? '100%' : 'min(350px, 100%)'};
         height: 40px;
         margin: 4px 0;
         padding: 0 1rem 0 25px;
@@ -37,14 +39,12 @@ export default function FormInput({ label, placeholder, ...inputProps }: FormInp
         }
 
         &:focus {
-          background: ${theme.colors.surface};
-          box-shadow:
-            inset 4px 4px 4px rgb(163 177 198 / 65%),
-            inset -4px -4px 4px rgb(255 255 255 / 95%);
+          background: ${hideOnFocus ? 'transparent' : theme.colors.surface};
+          box-shadow: ${hideOnFocus ? 'none' : `inset 4px 4px 4px rgb(163 177 198 / 65%), inset -4px -4px 4px rgb(255 255 255 / 95%)`};
         }
 
         &:focus-visible {
-          outline: 3px solid rgb(76 141 255 / 35%);
+          outline: ${hideOnFocus ? 'none' : '3px solid rgb(76 141 255 / 35%)'};
           outline-offset: 2px;
         }
 

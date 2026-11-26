@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from 'react'
 import { css } from '@emotion/react'
 import type { Icon } from '@phosphor-icons/react'
 import { type ButtonSize, type ButtonVariant } from './Button'
-import { getIconButtonStyles } from './theme'
+import { getIconButtonStyles, theme } from './theme'
 
 const iconChangeStyles = css`
   display: inline-flex;
@@ -50,6 +50,7 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   loading?: boolean
   pressed?: boolean
+  isDropTarget?: boolean
   onClick: () => void
 }
 
@@ -60,6 +61,7 @@ export default function IconButton({
   variant = 'primary',
   loading = false,
   pressed = false,
+  isDropTarget = false,
   disabled = false,
   type = 'button',
   onClick,
@@ -81,7 +83,13 @@ export default function IconButton({
         buttonProps.onContextMenu?.(event)
       }}
       onClick={onClick}
-      css={getIconButtonStyles({ variant, size, disabled: isDisabled })}
+      css={[
+        getIconButtonStyles({ variant, size, disabled: isDisabled }),
+        isDropTarget && css`
+          outline: 3px solid ${theme.colors.focus};
+          outline-offset: 3px;
+        `,
+      ]}
     >
       <span key={getIconKey(IconComponent)} css={iconChangeStyles} aria-hidden="true">
         <IconComponent color="currentColor" size="1.25em" weight="bold" />
